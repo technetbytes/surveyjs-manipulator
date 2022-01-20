@@ -1,4 +1,6 @@
 require('dotenv').config();
+var mongoDB = require("./modules/MongoDB.js");
+var sqlite3DB = require("./modules/Sqlite3.js");
 
 function identifyQuestionsFromJson(radioGroupQuestions, imagePickerQuestions, 
 									radioHashMap, imagePickerHashMap, imageEmptyAttributes, 
@@ -238,71 +240,71 @@ function removeAttributesFromDocument(mongoDoc, imageEmptyAttributes, radioEmpty
 	console.log(Object.keys(mongoDoc.answers).length);
 }
 
-class MongoDB{
-	constructor(dbfile){
-		this.dbfile = dbfile;
-		this.mongoose = null;
-		this.Schema = null;
-		this.simpleSurveyResponsesMongoSchema = null;
-		this.simpleSurveyResponsesModel = null;
-	}
+// class MongoDB{
+// 	constructor(dbfile){
+// 		this.dbfile = dbfile;
+// 		this.mongoose = null;
+// 		this.Schema = null;
+// 		this.simpleSurveyResponsesMongoSchema = null;
+// 		this.simpleSurveyResponsesModel = null;
+// 	}
 	
-	open(){
-		const mongoose = require("mongoose");
-		this.mongoose = mongoose;
-		this.Schema = this.mongoose.Schema;
+// 	open(){
+// 		const mongoose = require("mongoose");
+// 		this.mongoose = mongoose;
+// 		this.Schema = this.mongoose.Schema;
 		
-		this.mongoose.connect(this.dbfile, {
-			useNewUrlParser: true,		
-			useUnifiedTopology: true,
-		  })
-		  .then(() => {
-			console.log("Connected to MongoDB");
-		  })
-		  .catch((err) => console.error("couldnt connect....", err));
+// 		this.mongoose.connect(this.dbfile, {
+// 			useNewUrlParser: true,		
+// 			useUnifiedTopology: true,
+// 		  })
+// 		  .then(() => {
+// 			console.log("Connected to MongoDB");
+// 		  })
+// 		  .catch((err) => console.error("couldnt connect....", err));
 		  
-		this.simpleSurveyResponsesMongoSchema = new this.Schema(
-			  {
-				metaKey: {
-				  type: Object,
-				},
-			  },
-			  { strict: false }
-			);
-		this.simpleSurveyResponsesModel = mongoose.model(
-			"simplesurveyresponses",
-			this.simpleSurveyResponsesMongoSchema
-		);
-	}
+// 		this.simpleSurveyResponsesMongoSchema = new this.Schema(
+// 			  {
+// 				metaKey: {
+// 				  type: Object,
+// 				},
+// 			  },
+// 			  { strict: false }
+// 			);
+// 		this.simpleSurveyResponsesModel = mongoose.model(
+// 			"simplesurveyresponses",
+// 			this.simpleSurveyResponsesMongoSchema
+// 		);
+// 	}
 	
-	getRecordByResponseCode(responseCode) {
-		return new Promise((resolve, reject) => {
-		  this.simpleSurveyResponsesModel.find({'metaKey.projectId':7, 'metaKey.simpleSurveyResponseCode':responseCode}, (err, rows) => {
-			if (err) {
-			  console.log('Error running sql: ' + sql)
-			  console.log(err)
-			  reject(err)
-			} else {
-			  resolve(rows)
-			}
-		  }).limit(1)
-		})
-	}
+// 	getRecordByResponseCode(responseCode) {
+// 		return new Promise((resolve, reject) => {
+// 		  this.simpleSurveyResponsesModel.find({'metaKey.projectId':7, 'metaKey.simpleSurveyResponseCode':responseCode}, (err, rows) => {
+// 			if (err) {
+// 			  console.log('Error running sql: ' + sql)
+// 			  console.log(err)
+// 			  reject(err)
+// 			} else {
+// 			  resolve(rows)
+// 			}
+// 		  }).limit(1)
+// 		})
+// 	}
 	
-	getOneRecord() {
-		return new Promise((resolve, reject) => {
-		  this.simpleSurveyResponsesModel.find({'metaKey.projectId':7}, (err, rows) => {
-			if (err) {
-			  console.log('Error running sql: ' + sql)
-			  console.log(err)
-			  reject(err)
-			} else {
-			  resolve(rows)
-			}
-		  }).limit(1)
-		})
-	}
-}
+// 	getOneRecord() {
+// 		return new Promise((resolve, reject) => {
+// 		  this.simpleSurveyResponsesModel.find({'metaKey.projectId':7}, (err, rows) => {
+// 			if (err) {
+// 			  console.log('Error running sql: ' + sql)
+// 			  console.log(err)
+// 			  reject(err)
+// 			} else {
+// 			  resolve(rows)
+// 			}
+// 		  }).limit(1)
+// 		})
+// 	}
+// }
 
 class CSVReader{
 	constructor(csvfile){
@@ -326,132 +328,132 @@ class CSVReader{
 	}
 }
 
-class SqliteDB {
-	constructor(dbfile){
-		this.dbfile = dbfile;
-		this.db = null;
-	}
+// class SqliteDB {
+// 	constructor(dbfile){
+// 		this.dbfile = dbfile;
+// 		this.db = null;
+// 	}
 	
-	open(){
-		const sqlite3 = require('sqlite3').verbose();
-		// open the database
-		this.db = new sqlite3.Database(this.dbfile, (err) => {
-		  if (err) {
-			console.error(err.message);
-		  }
-		  console.log('Connected to the chinook database.');
-		});	
-		return db;
-	}
+// 	open(){
+// 		const sqlite3 = require('sqlite3').verbose();
+// 		// open the database
+// 		this.db = new sqlite3.Database(this.dbfile, (err) => {
+// 		  if (err) {
+// 			console.error(err.message);
+// 		  }
+// 		  console.log('Connected to the chinook database.');
+// 		});	
+// 		return db;
+// 	}
 
-	createTables(){
-		const projectResponseIds = `
-		CREATE TABLE IF NOT EXISTS projectresponseidsinfo (
-		  id INTEGER PRIMARY KEY AUTOINCREMENT,
-		  responsecode TEXT,
-		  status INTEGER)`
-		this.db.run(projectResponseIds);
+// 	createTables(){
+// 		const projectResponseIds = `
+// 		CREATE TABLE IF NOT EXISTS projectresponseidsinfo (
+// 		  id INTEGER PRIMARY KEY AUTOINCREMENT,
+// 		  responsecode TEXT,
+// 		  status INTEGER)`
+// 		this.db.run(projectResponseIds);
 		
 		
-		const lastProcessResponseCode = `
-		CREATE TABLE IF NOT EXISTS lastresponsecode (
-		  id INTEGER PRIMARY KEY AUTOINCREMENT,
-		  projectresponseinfo_id INTEGER)`
-		this.db.run(lastProcessResponseCode);
+// 		const lastProcessResponseCode = `
+// 		CREATE TABLE IF NOT EXISTS lastresponsecode (
+// 		  id INTEGER PRIMARY KEY AUTOINCREMENT,
+// 		  projectresponseinfo_id INTEGER)`
+// 		this.db.run(lastProcessResponseCode);
 		
-		const processedJsonObject = `
-		CREATE TABLE IF NOT EXISTS processedjsonobject (
-		  id INTEGER PRIMARY KEY AUTOINCREMENT,
-		  processanswerjson TEXT,
-		  responsecode TEXT,
-		  projectresponseinfo_id INTEGER)`
-		this.db.run(processedJsonObject);
+// 		const processedJsonObject = `
+// 		CREATE TABLE IF NOT EXISTS processedjsonobject (
+// 		  id INTEGER PRIMARY KEY AUTOINCREMENT,
+// 		  processanswerjson TEXT,
+// 		  responsecode TEXT,
+// 		  projectresponseinfo_id INTEGER)`
+// 		this.db.run(processedJsonObject);
 		
-		console.log("Tables created in the database");
-	}
+// 		console.log("Tables created in the database");
+// 	}
 	
-	insertProjectResponseIdsData(jsonData){
-		jsonData.forEach(row => {
-			this.db.run('INSERT INTO projectresponseidsinfo (responsecode, status) VALUES (?,?)',[row['responsecode'],row['status']])
-		});
-	}
+// 	insertProjectResponseIdsData(jsonData){
+// 		jsonData.forEach(row => {
+// 			this.db.run('INSERT INTO projectresponseidsinfo (responsecode, status) VALUES (?,?)',[row['responsecode'],row['status']])
+// 		});
+// 	}
 	
-	insertProcessResponse(projectdata_id){
-		this.db.run('INSERT INTO lastresponsecode (projectresponseinfo_id) VALUES (?)',[projectdata_id]);
-	}
+// 	insertProcessResponse(projectdata_id){
+// 		this.db.run('INSERT INTO lastresponsecode (projectresponseinfo_id) VALUES (?)',[projectdata_id]);
+// 	}
 	
-	insertProcessedJson(responseCode, projectResponseId, jsonObject) {
-		this.db.run('INSERT INTO processedjsonobject (responsecode,projectresponseinfo_id,processanswerjson) VALUES (?,?,?)',[responseCode, projectResponseId, jsonObject]);
-	}
+// 	insertProcessedJson(responseCode, projectResponseId, jsonObject) {
+// 		this.db.run('INSERT INTO processedjsonobject (responsecode,projectresponseinfo_id,processanswerjson) VALUES (?,?,?)',[responseCode, projectResponseId, jsonObject]);
+// 	}
 	
-	queryTable(){
-		const sql = 'SELECT * FROM projectdata'
-		this.db.all(sql,[], (err, result) => {
-			if (err) {
-			  console.log('Error running sql: ' + sql)
-			  console.log(err)
-			  (err)
-			} else {
-			  console.log(result)
-			}
-		  });	
-	}	
+// 	queryTable(){
+// 		const sql = 'SELECT * FROM projectdata'
+// 		this.db.all(sql,[], (err, result) => {
+// 			if (err) {
+// 			  console.log('Error running sql: ' + sql)
+// 			  console.log(err)
+// 			  (err)
+// 			} else {
+// 			  console.log(result)
+// 			}
+// 		  });	
+// 	}	
 
-	getLastRecord() {
-		return new Promise((resolve, reject) => {
-		  this.db.get("SELECT projectresponseinfo_id FROM lastresponsecode ORDER BY projectresponseinfo_id DESC LIMIT 1", [], (err, rows) => {
-			if (err) {
-			  console.log('Error running sql: ' + sql)
-			  console.log(err)
-			  reject(err)
-			} else {
-			  resolve(rows)
-			}
-		  })
-		})
-	}
+// 	getLastRecord() {
+// 		return new Promise((resolve, reject) => {
+// 		  this.db.get("SELECT projectresponseinfo_id FROM lastresponsecode ORDER BY projectresponseinfo_id DESC LIMIT 1", [], (err, rows) => {
+// 			if (err) {
+// 			  console.log('Error running sql: ' + sql)
+// 			  console.log(err)
+// 			  reject(err)
+// 			} else {
+// 			  resolve(rows)
+// 			}
+// 		  })
+// 		})
+// 	}
 	
-	get(sql, params = []) {
-		return new Promise((resolve, reject) => {
-		  this.db.get(sql, params, (err, rows) => {
-			if (err) {
-			  console.log('Error running sql: ' + sql)
-			  console.log(err)
-			  reject(err)
-			} else {
-			  resolve(rows)
-			}
-		  })
-		})
-	}
+// 	get(sql, params = []) {
+// 		return new Promise((resolve, reject) => {
+// 		  this.db.get(sql, params, (err, rows) => {
+// 			if (err) {
+// 			  console.log('Error running sql: ' + sql)
+// 			  console.log(err)
+// 			  reject(err)
+// 			} else {
+// 			  resolve(rows)
+// 			}
+// 		  })
+// 		})
+// 	}
 	
-	all(sql, params = []) {
-		return new Promise((resolve, reject) => {
-		  this.db.all(sql, params, (err, rows) => {
-			if (err) {
-			  console.log('Error running sql: ' + sql)
-			  console.log(err)
-			  reject(err)
-			} else {
-			  resolve(rows)
-			}
-		  })
-		})
-	}
+// 	all(sql, params = []) {
+// 		return new Promise((resolve, reject) => {
+// 		  this.db.all(sql, params, (err, rows) => {
+// 			if (err) {
+// 			  console.log('Error running sql: ' + sql)
+// 			  console.log(err)
+// 			  reject(err)
+// 			} else {
+// 			  resolve(rows)
+// 			}
+// 		  })
+// 		})
+// 	}
 
-	close(){
-		this.db.close((err) => {
-		if (err) {
-			console.error(err.message);
-		  }
-		  console.log('Close the database connection.');
-		});
-	}
-}
+// 	close(){
+// 		this.db.close((err) => {
+// 		if (err) {
+// 			console.error(err.message);
+// 		  }
+// 		  console.log('Close the database connection.');
+// 		});
+// 	}
+// }
 
 async function setupDBandLogs(){
 	//Open Sqlite Database 
-	db = new SqliteDB(process.env.SQLITE3_CONNECTION);
+	db = new sqlite3DB(process.env.SQLITE3_CONNECTION);
 	db.open();
 	//
 	//Setup Database and tables, following need to run only one time.
@@ -491,11 +493,11 @@ async function mainApp() {
 	const imageEmptyAttributesMap = new Map();
 	
 	//Open Sqlite Database 
-	db = new SqliteDB(process.env.SQLITE3_CONNECTION);
+	db = new sqlite3DB(process.env.SQLITE3_CONNECTION);
 	db.open();	
 	
 	//connect to MongoDB
-	mongodb = new MongoDB(process.env.MONGODB_CONNECTION);
+	mongodb = new mongoDB(process.env.MONGODB_CONNECTION);
 	mongodb.open();
 	
 	let pkId = 0;
@@ -592,4 +594,6 @@ async function mainApp() {
 //setupDBandLogs()
 
 //Step 2:- Call application Main function
-mainApp()
+//mainApp()
+mongoDB2 = new mongoDB(process.env.MONGODB_CONNECTION);
+mongoDB2.open();

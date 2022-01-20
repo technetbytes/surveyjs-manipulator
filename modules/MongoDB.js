@@ -1,4 +1,4 @@
-class MongoDB{
+module.exports = class MongoDB{
 	constructor(dbfile){
 		this.dbfile = dbfile;
 		this.mongoose = null;
