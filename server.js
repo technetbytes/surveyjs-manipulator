@@ -453,9 +453,6 @@ async function setupDBandLogs(){
 	//Open Sqlite Database 
 	db = new SqliteDB(process.env.SQLITE3_CONNECTION);
 	db.open();
-	
-	//
-	//Step:(A) *************************************************
 	//
 	//Setup Database and tables, following need to run only one time.
 	//
@@ -468,6 +465,9 @@ async function setupDBandLogs(){
 	
 		//Step 3. Insert data in sqlite
 		db.insertProjectResponseIdsData(csvJsonData);
+
+		//Step 4. Close DB connection
+		db.close();
 	//*************************************************
 }
 
@@ -478,46 +478,24 @@ async function mainApp() {
 	//As per our discuss we need to add support of String Data as well. Currently all data is in numeric form.
 	//*************************************************
 	//Question Name definition
-	const radioGroupQuestions = ["B1a", "B1d", "B1e", "B1f"];
-	const imagePickerQuestions = ["B2e","B3b"];
+	const singleSelectionQuestions = process.env.SINGLE_SELECTION_QUESTIONS;
+	const multiSelectionQuestions = process.env.MULTI_SELECTION_QUESTIONS;
 	
 	//Execution Condition
 	let isRecordFind = true;
 
-	//Radio & ImagePicker Map
+	//Single & Multiple Map
 	const radioHashMap = new Map();
 	const radioEmptyAttributesMap = new Map();
 	const imagePickerHashMap = new Map();
 	const imageEmptyAttributesMap = new Map();
 	
 	//Open Sqlite Database 
-	db = new SqliteDB('./db/responses.db');
-	db.open();
-	
-	
-	//Step:(A) *************************************************
-	//
-	//Setup Database and tables, following need to run only one time.
-	//
-		//Step 1. Read ResponseId data from csv file
-		//csv = new CSVReader('recordlog.csv');
-		//csvJsonData = csv.read();
-	
-		//Step 2. Create tables in database;
-		//db.createTables();
-	
-		//Step 3. Insert data in sqlite
-		//db.insertProjectResponseIdsData(csvJsonData);
-	//*************************************************
-	
-	//Step:(B) *************************************************
-	//
-	// Core execution logic in while loop
-	//
-	//*************************************************
+	db = new SqliteDB(process.env.SQLITE3_CONNECTION);
+	db.open();	
 	
 	//connect to MongoDB
-	mongodb = new MongoDB("mongodb+srv://admin:admin@cluster0.5inoe.mongodb.net/simplesurveyresponses");
+	mongodb = new MongoDB(process.env.MONGODB_CONNECTION);
 	mongodb.open();
 	
 	let pkId = 0;
@@ -538,7 +516,7 @@ async function mainApp() {
 				//Fetching data from MongoDB for processing
 				const mongoDocument = await mongodb.getRecordByResponseCode('95863229071520');//getResponseCode.responsecode);
 				//Start processing MongoDB json Document and identify questions
-				identifyQuestionsFromJson(	radioGroupQuestions, imagePickerQuestions, 
+				identifyQuestionsFromJson(	singleSelectionQuestions, multiSelectionQuestions, 
 											radioHashMap, imagePickerHashMap, imageEmptyAttributesMap, 
 											mongoDocument?.[0]);
 				
@@ -610,8 +588,8 @@ async function mainApp() {
 	db.close();
 }
 
-console.log(process.env.USER_ID);
-//Setup Database and Update Load Record CSV, one time only
-setupDBandLogs()
-//Call application Main function
-//mainApp()
+//Step 1:- One-time only, Setup Database and Update Load Record CSV. 
+//setupDBandLogs()
+
+//Step 2:- Call application Main function
+mainApp()
