@@ -1,63 +1,67 @@
 require('dotenv').config();
-var mongoDB = require("./modules/MongoDB.js");
-var sqlite3DB = require("./modules/Sqlite3.js");
+let mongoDB = require("./modules/MongoDB.js");
+let sqlite3DB = require("./modules/Sqlite3.js");
+let csvReader = require("./modules/CSVReader.js");
+
 
 function identifyQuestionsFromJson(radioGroupQuestions, imagePickerQuestions, 
 									radioHashMap, imagePickerHashMap, imageEmptyAttributes, 
-									answerObject){
-	if(answerObject.answers){
-		//console.log(answerObject.answers);
-		answerObject.answers.forEach(obj => {
-			//console.log(obj);
-			Object.entries(obj).forEach(([key, value]) => {
-				if(radioGroupQuestions.includes(key))
-				{
-					if(!radioHashMap.has(key))
-					{ 
-						let listOfRadioGroupQuestion = [value];
-						radioHashMap.set(key, listOfRadioGroupQuestion);
+									answerObject){									
+	if(typeof(answerObject)  !== undefined){
+		if(typeof(answerObject.answers)  !== undefined){
+			//console.log(answerObject.answers);
+			answerObject.answers.forEach(obj => {
+				//console.log(obj);
+				Object.entries(obj).forEach(([key, value]) => {
+					if(radioGroupQuestions.includes(key))
+					{
+						if(!radioHashMap.has(key))
+						{ 
+							let listOfRadioGroupQuestion = [value];
+							radioHashMap.set(key, listOfRadioGroupQuestion);
+						}
+						else{
+							let listOfRadioGroupQuestion = radioHashMap.get(key);
+							listOfRadioGroupQuestion.push(value);
+						}
+						//console.log(`${key} ${value} ====> Radio Type`);
 					}
 					else{
-						let listOfRadioGroupQuestion = radioHashMap.get(key);
-						listOfRadioGroupQuestion.push(value);
-					}
-					//console.log(`${key} ${value} ====> Radio Type`);
-				}
-				else{
-					const position = key.indexOf("_");				
-					if(position > -1){
-						const newQuestionPart = key.substring(0,position);		
-						if(imagePickerQuestions.includes(newQuestionPart))
-						{
-							if(destructuredValueObject(value) == false)
+						const position = key.indexOf("_");				
+						if(position > -1){
+							const newQuestionPart = key.substring(0,position);		
+							if(imagePickerQuestions.includes(newQuestionPart))
 							{
-								if(!imagePickerHashMap.has(key))
-								{ 
-									let imagePicQuestion = [value];
-									imagePickerHashMap.set(key, imagePicQuestion);
+								if(destructuredValueObject(value) == false)
+								{
+									if(!imagePickerHashMap.has(key))
+									{ 
+										let imagePicQuestion = [value];
+										imagePickerHashMap.set(key, imagePicQuestion);
+									}
+									else{
+										let imagePicQuestion = imagePickerHashMap.get(key);
+										imagePicQuestion.push(value);
+									}						
+									//console.log(`${key} ${value} ====> Image Picker Type`);
 								}
 								else{
-									let imagePicQuestion = imagePickerHashMap.get(key);
-									imagePicQuestion.push(value);
-								}						
-								//console.log(`${key} ${value} ====> Image Picker Type`);
-							}
-							else{
-								if(!imageEmptyAttributes.has(key))
-								{ 
-									let imagePicQuestion = [value];
-									imageEmptyAttributes.set(key, imagePicQuestion);
-								}
-								else{
-									let imagePicQuestion = imageEmptyAttributes.get(key);
-									imagePicQuestion.push(value);
+									if(!imageEmptyAttributes.has(key))
+									{ 
+										let imagePicQuestion = [value];
+										imageEmptyAttributes.set(key, imagePicQuestion);
+									}
+									else{
+										let imagePicQuestion = imageEmptyAttributes.get(key);
+										imagePicQuestion.push(value);
+									}
 								}
 							}
 						}
-					}
-				}            
-			});       
-		});
+					}            
+				});       
+			});
+		}
 	}
 }
 
@@ -67,6 +71,11 @@ function destructuredValueObject(value){
 		return true;
 	}
 	return false;
+}
+
+function renameKey ( obj, oldKey, newKey ) {
+	obj[newKey] = obj[oldKey];
+	delete obj[oldKey];
 }
 
 function imagePickerQuestionProcessing(imagePickerHashMap, imageEmptyAttributes){
@@ -112,6 +121,7 @@ function imagePickerQuestionProcessing(imagePickerHashMap, imageEmptyAttributes)
 }
 
 function radioQuestionProcessing(radioHashMap, radioEmptyAttributesMap){
+	//console.log(" ======== ", radioHashMap);
 	let radioPartitionValues = [];	
 	let questionPartitionValues = [];
 	
@@ -131,48 +141,111 @@ function radioQuestionProcessing(radioHashMap, radioEmptyAttributesMap){
 		//console.log(questionPartitionValues);
 		let maxExeculdeValue = Math.max.apply(Math, questionPartitionValues.map(function(o) { return o.value.value; }));
 		//console.log(maxExeculdeValue);
-		
-		questionPartitionValues.forEach(qstPart => {			
-			if(qstPart.value.value != maxExeculdeValue.toString()){	
-				data = { key : qstPart.key, value : qstPart.value };	
-				//console.log(data);
-				if(!radioEmptyAttributesMap.has(qstPart.key)){ 
-					let valuesData = [data];
-					radioEmptyAttributesMap.set(qstPart.key, valuesData);
-					//console.log(radioEmptyAttributesMap);
+		//console.log(" ====MAX START ==== ");
+		//console.log(questionPartitionValues);
+		//console.log(" ====MAX END ==== ");
+
+		// if(questionPartitionValues.length == 1){
+		// 	questionPartitionValues.forEach(qstPart => {
+		// 		data = { key : qstPart.key, value : qstPart.value };
+		// 		if(!radioEmptyAttributesMap.has(qstPart.key)){
+		// 			let valuesData = [data];
+		// 			radioEmptyAttributesMap.set(qstPart.key, valuesData);
+		// 		}
+		// 	});
+		// }
+		// else
+		{
+			questionPartitionValues.forEach(qstPart => {		
+				if(qstPart.value.value != maxExeculdeValue.toString()){	
+					data = { key : qstPart.key, value : qstPart.value };	
+					//console.log(data);
+					if(!radioEmptyAttributesMap.has(qstPart.key)){ 
+						let valuesData = [data];
+						radioEmptyAttributesMap.set(qstPart.key, valuesData);
+						//console.log(radioEmptyAttributesMap);
+					}
+					else{
+						let valuesData = radioEmptyAttributesMap.get(qstPart.key);
+						valuesData.push(data);
+						//console.log("*****");
+						//console.log(radioEmptyAttributesMap);
+					}				 
 				}
-				else{
-					let valuesData = radioEmptyAttributesMap.get(qstPart.key);
-					valuesData.push(data);
-					//console.log("*****");
-					//console.log(radioEmptyAttributesMap);
-				}				 
-			 }
-		  });
+			});
+		}
 		//console.log("++++");
 		questionPartitionValues=[];
     });
-	//console.log(radioEmptyAttributesMap);
+	//console.log(" *========* ", radioEmptyAttributesMap);
 }
 
 function removeAttributesFromDocument(mongoDoc, imageEmptyAttributes, radioEmptyAttributes){
 	
-	//console.log(imageEmptyAttributes, radioEmptyAttributes);
-	//console.log(Object.keys(mongoDoc.answers).length);
-	
-	//Part 1 :-
+	//console.log(Object.keys(mongoDoc.answers).length);	
+	//console.log(imageEmptyAttributes, radioEmptyAttributes);	
+	//Part 1 a :- In this Part A we are remove all attributes based on emptyAttributes items.
 	imageEmptyAttributes.forEach((obj, comparingKey)=>{
 		mongoDoc.answers.forEach((object,objectIndex) => {
 			Object.entries(object).forEach(([internalKey, selectedValue]) => {
-				if(comparingKey  === internalKey){
-					console.log("<------ compare --->",comparingKey,internalKey,objectIndex);
+				if(comparingKey  === internalKey){					
 					mongoDoc.answers.splice(objectIndex,1);
 					return;
 				}				
 			})			
 		});		
 	})
-	//Part 2 :-
+	//Part 1 b :- In this Part B we are rename all attributes based on emptyAttributes items first part.
+	renameColumnName = [];
+	imageEmptyAttributes.forEach((obj, comparingKey)=>{
+		const position = comparingKey.indexOf("_");				
+		if(position > -1){
+			const newQuestionPart = comparingKey.substring(0,position);	
+			if(!renameColumnName.includes(newQuestionPart)){
+				renameColumnName.push(newQuestionPart);
+			}
+		}
+	})
+	//console.log(" ---------------- rename Column name",renameColumnName);
+
+	renameColumnName.forEach(colName => {		
+		mongoDoc.answers.forEach((object,objectIndex) => {
+			Object.entries(object).forEach(([internalKey, selectedValue]) => {
+				const position = internalKey.indexOf("_");
+				 if(position > -1){		
+					newAttributeName = internalKey.substring(0,position);
+					if(colName === internalKey.substring(0,position)){
+						console.log(object);
+						var newAttributeNameObj = {}
+						newAttributeNameObj[newAttributeName] = selectedValue;
+						//replace the attribute with the new object
+						mongoDoc.answers.splice(objectIndex, 1, newAttributeNameObj);
+				 		//console.log(" ---------------- column going to rename", newAttributeName, selectedValue, objectIndex);
+						//console.log(" --- new object ",newAttributeNameObj);
+				 	}
+				 }
+			})
+		})
+	})
+
+
+
+	// mongoDoc.answers.forEach((object,objectIndex) => {
+	// 	Object.entries(object).forEach(([internalKey, selectedValue]) => {
+	// 		const position = internalKey.indexOf("_");				
+	// 		if(position > -1){
+	// 			//if(renameColumnName.includes(internalKey.substring(0,position)){}
+	// 			if(renameColumnName.includes(internalKey.substring(0,position))){
+	// 				console.log(" ---------------- column going to rename",internalKey.substring(0,position), selectedValue, objectIndex);
+	// 				//renameKey( internalKey, internalKey, internalKey.substring(0,position) );
+	// 			}
+	// 		}				
+	// 	})			
+	// });
+
+
+
+	//Part 2 :- 
 	radioEmptyAttributes.forEach((objectList, comparingKey)=>{
 		//console.log("radio *****************************>",objectList,comparingKey);
 		objectList.forEach((listObject, listIndex)=>{
@@ -192,264 +265,8 @@ function removeAttributesFromDocument(mongoDoc, imageEmptyAttributes, radioEmpty
 			})				
 		})
 	})
-	
-	//make a list of empty radio elements name 
-	//
-	// no need for the following code
-	//
-	// emptyRadioItems = []
-	// Object.values(radioEmptyAttributes).forEach((obj, index)=>{	
-		// if (!emptyRadioItems.includes(obj.key)) {
-			// emptyRadioItems.push(obj.key);
-		// }		
-	// });
-	
-	// //Remove attributes from json document based on finding question name
-	//
-	//
-	// Change the following logic because we removing items on Answer array object and loop is running on the object :)
-	//
-	//
-	// mongoDoc.answers.forEach((obj,objectIndex) => {
-		// Object.entries(obj).forEach(([key, selectedValue]) => {
-			// //console.log(key,objectIndex);
-			// if(imageEmptyAttributes.has(key)){
-				// // find item in Map object
-				// mongoDoc.answers.splice(objectIndex,1)
-			 // }
-			// // else if (emptyRadioItems.includes(key)){
-				// // // find item in newly radio elements list object				
-				// // mongoDoc.answers.splice(objectIndex,1)
-			// // }
-			// else if (radioEmptyAttributes.has(key)){
-				// // find item in newly radio elements list object				
-				// //console.log(radioEmptyAttributes.get(key));
-				// console.log(objectIndex, key, selectedValue.value);
-				// console.log("-----");
-				// let dataValues = radioEmptyAttributes.get(key);
-				// dataValues.forEach((emptyElement,index2) => {
-					// console.log(emptyElement.value.value, objectIndex);
-					// if(emptyElement.value.value == selectedValue.value){
-						// mongoDoc.answers.splice(objectIndex,1)
-					// }
-				// });
-				// //console.log(value);
-			// }			
-		// });
-	// });	
-	console.log(Object.keys(mongoDoc.answers).length);
+	//console.log(Object.keys(mongoDoc.answers).length);
 }
-
-// class MongoDB{
-// 	constructor(dbfile){
-// 		this.dbfile = dbfile;
-// 		this.mongoose = null;
-// 		this.Schema = null;
-// 		this.simpleSurveyResponsesMongoSchema = null;
-// 		this.simpleSurveyResponsesModel = null;
-// 	}
-	
-// 	open(){
-// 		const mongoose = require("mongoose");
-// 		this.mongoose = mongoose;
-// 		this.Schema = this.mongoose.Schema;
-		
-// 		this.mongoose.connect(this.dbfile, {
-// 			useNewUrlParser: true,		
-// 			useUnifiedTopology: true,
-// 		  })
-// 		  .then(() => {
-// 			console.log("Connected to MongoDB");
-// 		  })
-// 		  .catch((err) => console.error("couldnt connect....", err));
-		  
-// 		this.simpleSurveyResponsesMongoSchema = new this.Schema(
-// 			  {
-// 				metaKey: {
-// 				  type: Object,
-// 				},
-// 			  },
-// 			  { strict: false }
-// 			);
-// 		this.simpleSurveyResponsesModel = mongoose.model(
-// 			"simplesurveyresponses",
-// 			this.simpleSurveyResponsesMongoSchema
-// 		);
-// 	}
-	
-// 	getRecordByResponseCode(responseCode) {
-// 		return new Promise((resolve, reject) => {
-// 		  this.simpleSurveyResponsesModel.find({'metaKey.projectId':7, 'metaKey.simpleSurveyResponseCode':responseCode}, (err, rows) => {
-// 			if (err) {
-// 			  console.log('Error running sql: ' + sql)
-// 			  console.log(err)
-// 			  reject(err)
-// 			} else {
-// 			  resolve(rows)
-// 			}
-// 		  }).limit(1)
-// 		})
-// 	}
-	
-// 	getOneRecord() {
-// 		return new Promise((resolve, reject) => {
-// 		  this.simpleSurveyResponsesModel.find({'metaKey.projectId':7}, (err, rows) => {
-// 			if (err) {
-// 			  console.log('Error running sql: ' + sql)
-// 			  console.log(err)
-// 			  reject(err)
-// 			} else {
-// 			  resolve(rows)
-// 			}
-// 		  }).limit(1)
-// 		})
-// 	}
-// }
-
-class CSVReader{
-	constructor(csvfile){
-		this.csvfile = csvfile;		
-	}	
-	
-	read()
-	{
-		const fs = require('fs');
-		const csvParse = require("papaparse");		
-		const content = fs.readFileSync(this.csvfile, "utf8");		
-		var rows;
-		csvParse.parse(content, {
-			header: true,
-			delimiter: ",",
-			complete: function(results) {
-				rows = results.data;
-			}
-		});
-		return rows;
-	}
-}
-
-// class SqliteDB {
-// 	constructor(dbfile){
-// 		this.dbfile = dbfile;
-// 		this.db = null;
-// 	}
-	
-// 	open(){
-// 		const sqlite3 = require('sqlite3').verbose();
-// 		// open the database
-// 		this.db = new sqlite3.Database(this.dbfile, (err) => {
-// 		  if (err) {
-// 			console.error(err.message);
-// 		  }
-// 		  console.log('Connected to the chinook database.');
-// 		});	
-// 		return db;
-// 	}
-
-// 	createTables(){
-// 		const projectResponseIds = `
-// 		CREATE TABLE IF NOT EXISTS projectresponseidsinfo (
-// 		  id INTEGER PRIMARY KEY AUTOINCREMENT,
-// 		  responsecode TEXT,
-// 		  status INTEGER)`
-// 		this.db.run(projectResponseIds);
-		
-		
-// 		const lastProcessResponseCode = `
-// 		CREATE TABLE IF NOT EXISTS lastresponsecode (
-// 		  id INTEGER PRIMARY KEY AUTOINCREMENT,
-// 		  projectresponseinfo_id INTEGER)`
-// 		this.db.run(lastProcessResponseCode);
-		
-// 		const processedJsonObject = `
-// 		CREATE TABLE IF NOT EXISTS processedjsonobject (
-// 		  id INTEGER PRIMARY KEY AUTOINCREMENT,
-// 		  processanswerjson TEXT,
-// 		  responsecode TEXT,
-// 		  projectresponseinfo_id INTEGER)`
-// 		this.db.run(processedJsonObject);
-		
-// 		console.log("Tables created in the database");
-// 	}
-	
-// 	insertProjectResponseIdsData(jsonData){
-// 		jsonData.forEach(row => {
-// 			this.db.run('INSERT INTO projectresponseidsinfo (responsecode, status) VALUES (?,?)',[row['responsecode'],row['status']])
-// 		});
-// 	}
-	
-// 	insertProcessResponse(projectdata_id){
-// 		this.db.run('INSERT INTO lastresponsecode (projectresponseinfo_id) VALUES (?)',[projectdata_id]);
-// 	}
-	
-// 	insertProcessedJson(responseCode, projectResponseId, jsonObject) {
-// 		this.db.run('INSERT INTO processedjsonobject (responsecode,projectresponseinfo_id,processanswerjson) VALUES (?,?,?)',[responseCode, projectResponseId, jsonObject]);
-// 	}
-	
-// 	queryTable(){
-// 		const sql = 'SELECT * FROM projectdata'
-// 		this.db.all(sql,[], (err, result) => {
-// 			if (err) {
-// 			  console.log('Error running sql: ' + sql)
-// 			  console.log(err)
-// 			  (err)
-// 			} else {
-// 			  console.log(result)
-// 			}
-// 		  });	
-// 	}	
-
-// 	getLastRecord() {
-// 		return new Promise((resolve, reject) => {
-// 		  this.db.get("SELECT projectresponseinfo_id FROM lastresponsecode ORDER BY projectresponseinfo_id DESC LIMIT 1", [], (err, rows) => {
-// 			if (err) {
-// 			  console.log('Error running sql: ' + sql)
-// 			  console.log(err)
-// 			  reject(err)
-// 			} else {
-// 			  resolve(rows)
-// 			}
-// 		  })
-// 		})
-// 	}
-	
-// 	get(sql, params = []) {
-// 		return new Promise((resolve, reject) => {
-// 		  this.db.get(sql, params, (err, rows) => {
-// 			if (err) {
-// 			  console.log('Error running sql: ' + sql)
-// 			  console.log(err)
-// 			  reject(err)
-// 			} else {
-// 			  resolve(rows)
-// 			}
-// 		  })
-// 		})
-// 	}
-	
-// 	all(sql, params = []) {
-// 		return new Promise((resolve, reject) => {
-// 		  this.db.all(sql, params, (err, rows) => {
-// 			if (err) {
-// 			  console.log('Error running sql: ' + sql)
-// 			  console.log(err)
-// 			  reject(err)
-// 			} else {
-// 			  resolve(rows)
-// 			}
-// 		  })
-// 		})
-// 	}
-
-// 	close(){
-// 		this.db.close((err) => {
-// 		if (err) {
-// 			console.error(err.message);
-// 		  }
-// 		  console.log('Close the database connection.');
-// 		});
-// 	}
-// }
 
 async function setupDBandLogs(){
 	//Open Sqlite Database 
@@ -459,18 +276,67 @@ async function setupDBandLogs(){
 	//Setup Database and tables, following need to run only one time.
 	//
 		//Step 1. Read ResponseId data from csv file
-		csv = new CSVReader(process.env.CSV_FILE);
+		console.log("Reading CSV file from ",process.env.CSV_FILE);
+		csv = new csvReader(process.env.CSV_FILE);
 		csvJsonData = csv.read();
-	
+			
 		//Step 2. Create tables in database;
+		console.log("Creating Tables in database ...");
 		db.createTables();
 	
 		//Step 3. Insert data in sqlite
+		console.log("Inserting csv records in the table ...");
 		db.insertProjectResponseIdsData(csvJsonData);
 
 		//Step 4. Close DB connection
 		db.close();
 	//*************************************************
+}
+
+async function documentProcessing(pkId, singleSelectionQuestions, multiSelectionQuestions){
+	//Single & Multiple Map
+	const radioHashMap = new Map();
+	const radioEmptyAttributesMap = new Map();
+	const imagePickerHashMap = new Map();
+	const imageEmptyAttributesMap = new Map();
+
+	let isRecordFind = true;
+	let sqlQuery = 'SELECT responsecode FROM projectresponseidsinfo WHERE Id  = ?'	
+	const getResponseCode = await db.get(sqlQuery,pkId);
+	if(typeof getResponseCode == 'undefined'){
+		//Its means projectresponseidsinfo table is empty
+		console.log("Project Responseids info data empty or end, stopping program ...");
+		isRecordFind = false;
+	}
+	else{
+		//Fetching data from MongoDB for processing
+		console.log("Fetching Document Id :- ",getResponseCode.responsecode);
+		const mongoDocument = await mongodb.getRecordByResponseCode(getResponseCode.responsecode);//'95863229071520');
+		if(mongoDocument !== undefined && mongoDocument.length > 0){
+			//Start processing MongoDB json Document and identify questions
+			identifyQuestionsFromJson(	singleSelectionQuestions, multiSelectionQuestions, 
+										radioHashMap, imagePickerHashMap, imageEmptyAttributesMap, 
+										mongoDocument?.[0]);
+			//identify Radio Button elements
+			radioQuestionProcessing(radioHashMap, radioEmptyAttributesMap);
+			//identify multi-selection elements
+			imagePickerQuestionProcessing(imagePickerHashMap, imageEmptyAttributesMap);
+			
+			//Remove Elements from documents
+			removeAttributesFromDocument((mongoDocument?.[0]), imageEmptyAttributesMap, radioEmptyAttributesMap);
+			
+			//Insert Processed JSON in the database
+			db.insertProcessedJson(getResponseCode.responsecode, pkId, JSON.stringify(mongoDocument?.[0]));
+			
+			//Insert Processed Response Id for next iteration
+			db.insertProcessResponse(pkId);
+		}
+		else{
+			pkId = pkId++;
+			db.insertProcessResponse(pkId);
+		}
+	}
+	return isRecordFind;
 }
 
 async function mainApp() {
@@ -479,19 +345,14 @@ async function mainApp() {
 	//*************************************************
 	//As per our discuss we need to add support of String Data as well. Currently all data is in numeric form.
 	//*************************************************
+
 	//Question Name definition
 	const singleSelectionQuestions = process.env.SINGLE_SELECTION_QUESTIONS;
 	const multiSelectionQuestions = process.env.MULTI_SELECTION_QUESTIONS;
-	
+
 	//Execution Condition
 	let isRecordFind = true;
 
-	//Single & Multiple Map
-	const radioHashMap = new Map();
-	const radioEmptyAttributesMap = new Map();
-	const imagePickerHashMap = new Map();
-	const imageEmptyAttributesMap = new Map();
-	
 	//Open Sqlite Database 
 	db = new sqlite3DB(process.env.SQLITE3_CONNECTION);
 	db.open();	
@@ -506,94 +367,26 @@ async function mainApp() {
 		const lastProcessedResponseCode = await db.getLastRecord();
 		if(typeof lastProcessedResponseCode == 'undefined'){
 			console.log("Program fetching data first time ...");
-			let sqlQuery = 'SELECT responsecode FROM projectresponseidsinfo WHERE Id  = ?'
-		    pkId = 1;
-			const getResponseCode = await db.get(sqlQuery,pkId);
-			if(typeof getResponseCode == 'undefined'){
-				//Its means projectresponseidsinfo table is empty
-				console.log("projectresponseidsinfo data empty, stopping program ...");
-				isRecordFind = false;
-			}
-			else{
-				//Fetching data from MongoDB for processing
-				const mongoDocument = await mongodb.getRecordByResponseCode('95863229071520');//getResponseCode.responsecode);
-				//Start processing MongoDB json Document and identify questions
-				identifyQuestionsFromJson(	singleSelectionQuestions, multiSelectionQuestions, 
-											radioHashMap, imagePickerHashMap, imageEmptyAttributesMap, 
-											mongoDocument?.[0]);
-				
-				//Printing Map Data Structure
-				//console.log("Map Data Structure ------------------");
-				//console.log(radioHashMap);
-				//console.log("Map Data Structure ------------------");
-				//console.log(imagePickerHashMap);
-				
-				//identify Radio Button elements
-				radioQuestionProcessing(radioHashMap, radioEmptyAttributesMap);
-				//identify multi-selection elements
-				imagePickerQuestionProcessing(imagePickerHashMap, imageEmptyAttributesMap);
-				
-				//Print object elements 
-				//console.log(imageEmptyAttributesMap);
-				//console.log(radioEmptyAttributesMap);
-				
-				removeAttributesFromDocument((mongoDocument?.[0]), imageEmptyAttributesMap, radioEmptyAttributesMap);
-				//console.log(JSON.stringify(mongoDocument?.[0]));
-				db.insertProcessedJson(1,1,JSON.stringify(mongoDocument?.[0]));
-				isRecordFind = false;
-			}
+			pkId = 1;			
+			isRecordFind = await documentProcessing(pkId, singleSelectionQuestions, multiSelectionQuestions);
 		}
 		else{
-
-			isRecordFind = false;
+			console.log("Program fetching data for next iteration ...");
+			console.log(lastProcessedResponseCode.projectresponseinfo_id);
+			pkId = lastProcessedResponseCode.projectresponseinfo_id + 1;
+			isRecordFind = await documentProcessing(pkId, singleSelectionQuestions, multiSelectionQuestions);
 		}
 	}
-	
-	
-	
-	
-    //response = await db.all("SELECT projectresponseinfo_id FROM lastresponsecode ORDER BY projectresponseinfo_id DESC LIMIT 1", []);
-	//console.log("ProjectData Id:", response[0].projectresponseinfo_id)
-	
-	//connect to MongoDB
-	//mongodb = new MongoDB("mongodb+srv://admin:admin@cluster0.5inoe.mongodb.net/simplesurveyresponses");
-	//mongodb.open();
-	
-	//for testing purpose only, remove the following in the production
-	//const result = await mongodb.getRecordByResponseCode('58836213475');
-	
-	//Process MongoDB json Document and identify questions
-	//identifyQuestionsFromJson(radioGroupQuestions, imagePickerQuestions, radioHashMap, imagePickerHashMap, imageEmptyAttributes, radioEmptyAttributes, result?.[0]);
-	
-	//Print Map Data Structure
-	//console.log("------------------");
-	// console.log(radioHashMap);
-	// console.log("------------------");
-	// console.log(imagePickerHashMap);
-	
-	
-	//identify Radio Button elements
-	//radioQuestionProcessing(radioHashMap, radioEmptyAttributes);
-	//identify multi-selection elements
-	//imagePickerQuestionProcessing(imagePickerHashMap, imageEmptyAttributes);
-	
-	//Print object elements 
-	// console.log(imageEmptyAttributes);
-	// console.log(radioEmptyAttributes);
-
-	//test(radioGroupQuestions);
-	//db.insertProcessedJson(1,1,result?.[0]);
-	
-	
-	
+	console.log("Database connection closing ...");
 	//Close sqlite database
 	db.close();
+	
+	console.log("Program ending ...");
+	process.exit(0);
 }
 
 //Step 1:- One-time only, Setup Database and Update Load Record CSV. 
 //setupDBandLogs()
 
 //Step 2:- Call application Main function
-//mainApp()
-mongoDB2 = new mongoDB(process.env.MONGODB_CONNECTION);
-mongoDB2.open();
+mainApp()

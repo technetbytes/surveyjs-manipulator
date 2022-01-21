@@ -11,7 +11,7 @@ module.exports = class SqliteDB {
 		  if (err) {
 			console.error(err.message);
 		  }
-		  console.log('Connected to the chinook database.');
+		  console.log('Connected to the record management database.');
 		});	
 		return db;
 	}
@@ -22,8 +22,7 @@ module.exports = class SqliteDB {
 		  id INTEGER PRIMARY KEY AUTOINCREMENT,
 		  responsecode TEXT,
 		  status INTEGER)`
-		this.db.run(projectResponseIds);
-		
+		this.db.run(projectResponseIds);		
 		
 		const lastProcessResponseCode = `
 		CREATE TABLE IF NOT EXISTS lastresponsecode (
