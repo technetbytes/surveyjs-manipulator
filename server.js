@@ -181,9 +181,7 @@ function radioQuestionProcessing(radioHashMap, radioEmptyAttributesMap){
 }
 
 function removeAttributesFromDocument(mongoDoc, imageEmptyAttributes, radioEmptyAttributes){
-	
-	//console.log(Object.keys(mongoDoc.answers).length);	
-	//console.log(imageEmptyAttributes, radioEmptyAttributes);	
+
 	//Part 1 a :- In this Part A we are remove all attributes based on emptyAttributes items.
 	imageEmptyAttributes.forEach((obj, comparingKey)=>{
 		mongoDoc.answers.forEach((object,objectIndex) => {
@@ -228,23 +226,6 @@ function removeAttributesFromDocument(mongoDoc, imageEmptyAttributes, radioEmpty
 		})
 	})
 
-
-
-	// mongoDoc.answers.forEach((object,objectIndex) => {
-	// 	Object.entries(object).forEach(([internalKey, selectedValue]) => {
-	// 		const position = internalKey.indexOf("_");				
-	// 		if(position > -1){
-	// 			//if(renameColumnName.includes(internalKey.substring(0,position)){}
-	// 			if(renameColumnName.includes(internalKey.substring(0,position))){
-	// 				console.log(" ---------------- column going to rename",internalKey.substring(0,position), selectedValue, objectIndex);
-	// 				//renameKey( internalKey, internalKey, internalKey.substring(0,position) );
-	// 			}
-	// 		}				
-	// 	})			
-	// });
-
-
-
 	//Part 2 :- 
 	radioEmptyAttributes.forEach((objectList, comparingKey)=>{
 		//console.log("radio *****************************>",objectList,comparingKey);
@@ -268,27 +249,37 @@ function removeAttributesFromDocument(mongoDoc, imageEmptyAttributes, radioEmpty
 	//console.log(Object.keys(mongoDoc.answers).length);
 }
 
-async function setupDBandLogs(){
+async function uploadLogs(){
+
+	//Open Sqlite Database 
+	db = new sqlite3DB(process.env.SQLITE3_CONNECTION);
+	db.open();
+	
+	//Step 1. Read ResponseId data from csv file
+	console.log("Reading CSV file from ",process.env.CSV_FILE);
+	csv = new csvReader(process.env.CSV_FILE);
+	csvJsonData = csv.read();
+
+	//Step 2. Insert data in sqlite
+	console.log("Inserting csv records in the table ...");
+	db.insertProjectResponseIdsData(csvJsonData);
+
+	//Step 3. Close DB connection
+	db.close();
+}
+
+async function setupDB(){
 	//Open Sqlite Database 
 	db = new sqlite3DB(process.env.SQLITE3_CONNECTION);
 	db.open();
 	//
 	//Setup Database and tables, following need to run only one time.
-	//
-		//Step 1. Read ResponseId data from csv file
-		console.log("Reading CSV file from ",process.env.CSV_FILE);
-		csv = new csvReader(process.env.CSV_FILE);
-		csvJsonData = csv.read();
-			
-		//Step 2. Create tables in database;
+	//			
+		//Step 1. Create tables in database;
 		console.log("Creating Tables in database ...");
 		db.createTables();
-	
-		//Step 3. Insert data in sqlite
-		console.log("Inserting csv records in the table ...");
-		db.insertProjectResponseIdsData(csvJsonData);
 
-		//Step 4. Close DB connection
+		//Step 2. Close DB connection
 		db.close();
 	//*************************************************
 }
@@ -385,8 +376,11 @@ async function mainApp() {
 	process.exit(0);
 }
 
-//Step 1:- One-time only, Setup Database and Update Load Record CSV. 
-//setupDBandLogs()
+//Step 1:- One-time only, Setup Database. 
+setupDB()
 
-//Step 2:- Call application Main function
+//Step 2:- Upload CSV records in the table.
+uploadLogs();
+ 
+//Step 3:- Call application Main function
 mainApp()
